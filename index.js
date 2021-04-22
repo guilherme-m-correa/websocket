@@ -33,19 +33,14 @@ const MessageSchema = new mongoose.Schema({
 
 const Message = mongoose.model('Message', MessageSchema)
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   const { user_id } = socket.handshake.query;
 
 
-  socket.on('appointment', data => {
-    Message.find({ appointment_id: data.appointment_id }, (err, messages) => {
-      if (err) {
-        console.log(err)
-      }
+  socket.on('appointment', async (data) => {
+    const messages = await Message.find({ appointment_id: data.appointment_id })
 
-      io.emit(`previousMessages_${user_id}_${data.appointment_id}`, messages);
-    })
-
+    io.emit(`previousMessages_${user_id}_${data.appointment_id}`, messages);
   });
 
   socket.on('sendMessage', data => {
@@ -62,6 +57,10 @@ io.on('connection', (socket) => {
 
   socket.on('sendOffer', data => {
     socket.broadcast.emit('receivedOffer', data);
+  });
+
+  socket.on('updateAppointment', data => {
+    socket.broadcast.emit('receiveUpdateAppointment', data);
   });
 });
 
